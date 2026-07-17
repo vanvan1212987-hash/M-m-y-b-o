@@ -1,0 +1,79 @@
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Light = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+Light.GlobalShadows = false
+Light.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+Light.EnvironmentDiffuseScale = 0
+Light.EnvironmentSpecularScale = 0
+Light.Ambient = Color3.fromRGB(128, 128, 128)
+Light.Brightness = 1
+
+Workspace.StreamingMinRadius = 0
+Workspace.StreamingTargetRadius = 0
+
+local function stripDetail(obj)
+    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+        obj.Enabled = false
+    end
+    if obj:IsA("MeshPart") or obj:IsA("UnionOperation") or obj:IsA("Part") then
+        obj.Material = Enum.Material.SmoothPlastic
+        obj.Reflectance = 0
+    end
+    if obj:IsA("Decal") or obj:IsA("Texture") then
+        obj:Destroy()
+    end
+end
+
+for _, v in ipairs(Workspace:GetDescendants()) do
+    stripDetail(v)
+end
+Workspace.DescendantAdded:Connect(stripDetail)
+
+pcall(function()
+    settings().Rendering.QualityLevel = 1
+    settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Low
+end)
+
+for _, obj in ipairs(Workspace:GetDescendants()) do
+    if obj:IsA("Script") or obj:IsA("LocalScript") then
+        if obj.Name:lower():find("skill") or obj.Name:lower():find("attack") then
+            obj.Disabled = true
+        end
+    end
+end
+
+local camera = Workspace.CurrentCamera
+camera.FieldOfView = 120
+
+local VirtualUser = game:GetService('VirtualUser')
+game:GetService('Players').LocalPlayer.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    wait(1)
+    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+for _, s in ipairs(Workspace:GetDescendants()) do
+    if s:IsA("Sound") then
+        s.Volume = 0
+        s:Stop()
+        s:Destroy()
+    end
+end
+
+pcall(function()
+    settings().Rendering.FrustumCulling = true
+    Workspace.StreamingMinRadius = 32
+    Workspace.StreamingTargetRadius = 64
+end)
+
+if Workspace:FindFirstChildOfClass("Terrain") then
+    Workspace.Terrain.WaterWaveSize = 0
+    Workspace.Terrain.WaterWaveSpeed = 0
+    Workspace.Terrain.WaterReflectance = 0
+    Workspace.Terrain.WaterTransparency = 0
+end
+
+print("Lag fix applied.")
